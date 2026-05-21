@@ -57,8 +57,8 @@ class Runner:
 
         if pTrace:
             if varAccepted:
-                print(f"Estado final: {varCurrentState} ✅ ACEPTADA")
+                print(f"Estado final: {varCurrentState} ACEPTADA")
             else:
-                print(f"Estado final: {varCurrentState} ❌ RECHAZADA")
+                print(f"Estado final: {varCurrentState} RECHAZADA")
 
         return varAccepted
