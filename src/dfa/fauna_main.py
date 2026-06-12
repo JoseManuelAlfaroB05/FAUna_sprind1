@@ -1,7 +1,7 @@
 """
-Módulo principal de FAuna para la visualización de Autómatas Finitos Deterministas (DFA).
-Este módulo lee un autómata en formato JSON, lo valida usando la librería automata-lib
-y genera una representación gráfica en formato PNG usando pygraphviz.
+Módulo principal de FAuna para la gestión de Autómatas Finitos Deterministas (DFA).
+Permite ejecutar, visualizar y analizar DFAs desde la terminal.
+
 :course: EIF203 - Estructuras Discretas
 :university: Escuela de Informática – Universidad Nacional (UNA)
 :semester: I-2026
@@ -10,14 +10,17 @@ y genera una representación gráfica en formato PNG usando pygraphviz.
     - Josué Morales Paniagua
     - Anders Ramírez Mayorga
 """
+
 import sys
-import json
 import os
-from automata.fa.dfa import DFA
 from collections import defaultdict
+from model import DFA
+from runner import Runner
+from analysis import Analyser
 import pygraphviz as pgv
 
-def generar_dot(dfa):
+
+def generar_dot(pDfa):
     dot = "digraph DFA {\n"
     dot += "    rankdir=LR;\n"
     dot += "    nodesep=0.5;\n"
@@ -26,51 +29,83 @@ def generar_dot(dfa):
     dot += "    splines=true;\n"
     dot += "    node [shape=circle, fontsize=14];\n"
     dot += "    edge [fontsize=11];\n"
-    dot += f'    "" -> {dfa.initial_state};\n'
-    for estado in dfa.final_states:
-        dot += f'    {estado} [shape=doublecircle];\n'
-    for estado in dfa.states:
-        if estado not in dfa.final_states:
-            dot += f'    {estado} [shape=circle];\n'
-    for estado, transiciones in dfa.transitions.items():
-        grupos = defaultdict(list)
-        for simbolo, destino in transiciones.items():
-            grupos[destino].append(simbolo)
-        for destino, simbolos in grupos.items():
-            label = ",".join(simbolos)
-            dot += f'    {estado} -> {destino} [label="{label}"];\n'
+    dot += f'    "" -> {pDfa.varInitialState};\n'
+    for varState in pDfa.varFinalStates:
+        dot += f'    {varState} [shape=doublecircle];\n'
+    for varState in pDfa.varStates:
+        if varState not in pDfa.varFinalStates:
+            dot += f'    {varState} [shape=circle];\n'
+    for varState, varTransitions in pDfa.varTransitions.items():
+        varGroups = defaultdict(list)
+        for varSymbol, varDest in varTransitions.items():
+            varGroups[varDest].append(varSymbol)
+        for varDest, varSymbols in varGroups.items():
+            varLabel = ",".join(varSymbols)
+            dot += f'    {varState} -> {varDest} [label="{varLabel}"];\n'
     dot += "}\n"
     return dot
 
-def generar_png(dot, archivo_png):
+
+def cmd_run(pJsonPath, pInput, pTrace=False):
+    dfa = DFA.from_json(pJsonPath)
+    r = Runner(dfa)
+    r.run(pInput, pTrace)
+
+
+def cmd_view(pJsonPath):
+    dfa = DFA.from_json(pJsonPath)
+    dot = generar_dot(dfa)
+    varFolder = os.path.dirname(pJsonPath)
+    varBaseName = os.path.splitext(os.path.basename(pJsonPath))[0]
+    varPngPath = os.path.join(varFolder, varBaseName + ".png")
     grafo = pgv.AGraph(string=dot)
     grafo.layout(prog='dot')
-    grafo.draw(archivo_png, format='png')
+    grafo.draw(varPngPath, format='png')
+    print(f"Imagen generada: {varPngPath}")
+
+
+def cmd_analyse(pJsonPath):
+    dfa = DFA.from_json(pJsonPath)
+    a = Analyser(dfa)
+    print(f"Completo: {a.is_complete()}")
+    print(f"Estados inalcanzables: {a.unreachable_states()}")
+    print(f"Estados inútiles: {a.useless_states()}")
+
 
 def main():
-    if len(sys.argv) != 2:
-        print("Uso: python src\\dfa\\fauna_main.py examples\\automata.json")
+    if len(sys.argv) < 3:
+        print("Uso:")
+        print("  python src\\dfa\\fauna_main.py run <archivo.json> <input> [--trace]")
+        print("  python src\\dfa\\fauna_main.py view <archivo.json>")
+        print("  python src\\dfa\\fauna_main.py analyse <archivo.json>")
         return
-    ruta_json = sys.argv[1]
-    if not os.path.exists(ruta_json):
-        print("Error: archivo no encontrado")
+
+    varCommand = sys.argv[1]
+    varJsonPath = sys.argv[2]
+
+    if not os.path.exists(varJsonPath):
+        print(f"Error: archivo '{varJsonPath}' no encontrado")
         return
-    with open(ruta_json, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    dfa = DFA(
-        states=set(data["states"]),
-        input_symbols=set(data["alphabet"]),
-        transitions=data["transitions"],
-        initial_state=data["initial_state"],
-        final_states=set(data["final_states"])
-    )
-    print("DFA cargado correctamente")
-    dot = generar_dot(dfa)
-    carpeta = os.path.dirname(ruta_json)
-    nombre_base = os.path.splitext(os.path.basename(ruta_json))[0]
-    archivo_png = os.path.join(carpeta, nombre_base + ".png")
-    generar_png(dot, archivo_png)
-    print(f"Imagen generada: {archivo_png}")
+
+    if varCommand == "run":
+        if len(sys.argv) < 4:
+            print("Error: falta la cadena de entrada")
+            print("Uso: python src\\dfa\\fauna_main.py run <archivo.json> <input> [--trace]")
+            return
+        varInput = sys.argv[3]
+        varTrace = "--trace" in sys.argv
+        cmd_run(varJsonPath, varInput, varTrace)
+
+    elif varCommand == "view":
+        cmd_view(varJsonPath)
+
+    elif varCommand == "analyse":
+        cmd_analyse(varJsonPath)
+
+    else:
+        print(f"Error: comando '{varCommand}' no reconocido")
+        print("Comandos disponibles: run, view, analyse")
+
 
 if __name__ == "__main__":
     main()
