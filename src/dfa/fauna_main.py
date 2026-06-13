@@ -21,6 +21,18 @@ import pygraphviz as pgv
 
 
 def generar_dot(pDfa):
+    # Detectar si es modelo propio o automata-lib
+    if hasattr(pDfa, 'varInitialState'):
+        varInitial = pDfa.varInitialState
+        varFinals = pDfa.varFinalStates
+        varStates = pDfa.varStates
+        varTransitions = pDfa.varTransitions
+    else:
+        varInitial = pDfa.initial_state
+        varFinals = pDfa.final_states
+        varStates = pDfa.states
+        varTransitions = pDfa.transitions
+
     dot = "digraph DFA {\n"
     dot += "    rankdir=LR;\n"
     dot += "    nodesep=0.5;\n"
@@ -29,22 +41,21 @@ def generar_dot(pDfa):
     dot += "    splines=true;\n"
     dot += "    node [shape=circle, fontsize=14];\n"
     dot += "    edge [fontsize=11];\n"
-    dot += f'    "" -> {pDfa.varInitialState};\n'
-    for varState in pDfa.varFinalStates:
+    dot += f'    "" -> {varInitial};\n'
+    for varState in varFinals:
         dot += f'    {varState} [shape=doublecircle];\n'
-    for varState in pDfa.varStates:
-        if varState not in pDfa.varFinalStates:
+    for varState in varStates:
+        if varState not in varFinals:
             dot += f'    {varState} [shape=circle];\n'
-    for varState, varTransitions in pDfa.varTransitions.items():
+    for varState, varTrans in varTransitions.items():
         varGroups = defaultdict(list)
-        for varSymbol, varDest in varTransitions.items():
+        for varSymbol, varDest in varTrans.items():
             varGroups[varDest].append(varSymbol)
         for varDest, varSymbols in varGroups.items():
             varLabel = ",".join(varSymbols)
             dot += f'    {varState} -> {varDest} [label="{varLabel}"];\n'
     dot += "}\n"
     return dot
-
 
 def cmd_run(pJsonPath, pInput, pTrace=False):
     dfa = DFA.from_json(pJsonPath)

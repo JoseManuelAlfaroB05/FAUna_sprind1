@@ -1,12 +1,12 @@
-# FAuna 🦎
+# FAuna 
 
-**FAuna** es una herramienta de línea de comandos para visualizar Autómatas Finitos Deterministas (DFA) a partir de archivos JSON. Desarrollada como proyecto académico para el curso de Estructuras Discretas (EIF203) de la Escuela de Informática de la Universidad Nacional (UNA).
+**FAuna** es una herramienta de línea de comandos para visualizar, ejecutar y analizar Autómatas Finitos Deterministas (DFA) a partir de archivos JSON. Desarrollada como proyecto académico para el curso de Estructuras Discretas (EIF203) de la Escuela de Informática de la Universidad Nacional (UNA).
 
 ---
 
 ## Contexto
 
-Este proyecto fue desarrollado en el marco del curso **EIF203 - Estructuras Discretas (I-2026)** como parte del Sprint 1 del proyecto grupal FAuna. El objetivo es aplicar conceptos de autómatas finitos y desarrollar competencias en el manejo de herramientas de desarrollo como Git, ambientes virtuales de Python y bibliotecas especializadas.
+Este proyecto fue desarrollado en el marco del curso **EIF203 - Estructuras Discretas (I-2026)** como parte del Sprint 2 del proyecto grupal FAuna. El objetivo es aplicar conceptos de autómatas finitos y desarrollar competencias en el manejo de herramientas de desarrollo como Git, ambientes virtuales de Python y bibliotecas especializadas.
 
 ---
 
@@ -20,15 +20,17 @@ Este proyecto fue desarrollado en el marco del curso **EIF203 - Estructuras Disc
 
 ---
 
-## Estado Actual
-
-🟡 **En desarrollo — Sprint 1**
-
+## Sprint 2
 - [x] Estructura del proyecto
+- [x] Modelo propio de DFA sin dependencias externas
 - [x] Lectura y validación de DFAs en formato JSON
 - [x] Visualización de DFAs como imagen PNG
-- [x] Ejemplos de autómatas
-- [x] Tests de visualización
+- [x] Ejecución de DFAs con tracing
+- [x] Análisis de DFAs (completitud, estados inalcanzables e inútiles)
+- [x] Compilador de DFA extendido a DFA estándar
+- [x] Sistema de comandos desde la terminal (`run`, `view`, `analyse`)
+- [x] Ejemplos de autómatas estándar y extendido
+- [x] Tests de visualización, análisis, compilación y runner
 - [x] Documentación automática con Sphinx
 
 ---
@@ -39,20 +41,23 @@ Este proyecto fue desarrollado en el marco del curso **EIF203 - Estructuras Disc
 fauna/
 ├── src/
 │   └── dfa/
-│       ├── fauna_main.py   # Punto de entrada principal
-│       ├── model.py
-│       ├── runner.py
-│       ├── analysis.py
-│       └── compiler.py
+│       ├── fauna_main.py   # Punto de entrada principal con sistema de comandos
+│       ├── model.py        # Modelo propio de DFA sin dependencias externas
+│       ├── runner.py       # Ejecución de DFAs con tracing
+│       ├── analysis.py     # Análisis de DFAs
+│       └── compiler.py     # Compilador de DFA extendido a estándar
 ├── tests/
 │   ├── test_visualization.py
-│   └── ...
+│   ├── test_analysis.py
+│   ├── test_compilation.py
+│   └── test_runner.py
 ├── docs/                   # Configuración de Sphinx
 ├── html/                   # Documentación generada
 ├── examples/
-│   ├── automata_1.json     # DFA: Verificador de vocales
-│   ├── automata_2.json     # DFA: Semáforo inteligente
-│   └── automata_3.json     # DFA: Buscador de codones
+│   ├── vocales.json        # DFA: Verificador de vocales
+│   ├── semaforo.json       # DFA: Semáforo inteligente
+│   ├── bases.json          # DFA: Buscador de codones
+│   └── extended_dfa.json   # DFA extendido de ejemplo
 ├── README.md
 ├── requirements.txt
 └── .gitignore
@@ -85,6 +90,9 @@ El estado inicial y final es **q0 (Rojo)**.
 ### Autómata 3 — Buscador de Codones
 Escanea una secuencia de bases nitrogenadas (A, T, G, C) en busca de al menos uno de los codones de inicio/parada: **ATG**, **TAA** o **TGC**. El autómata avanza por los estados según el progreso en la detección del patrón.
 
+### Autómata Extendido — Ejemplo de DFA con Expresiones Regulares
+DFA extendido de ejemplo que usa expresiones regulares en sus transiciones (`[a-z]`, `\d`). Sirve como entrada para el compilador.
+
 ---
 
 ## Forma de Uso
@@ -104,37 +112,64 @@ cd FAUna_sprind1
 python -m venv env
 env\Scripts\activate
 
+# en caso de no poder activar el ambiente por algun error usar
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+
+# En Windows, si pygraphviz da error, ejecutar primero:
+$env:INCLUDE = "C:\Program Files\Graphviz\include"
+$env:LIB = "C:\Program Files\Graphviz\lib"
+
 # Instalar dependencias
 pip install -r requirements.txt
 ```
 
-### Ejecución
+### Comandos
 
 Desde la raíz del proyecto, con el ambiente virtual activado:
 
+**Ejecutar un DFA contra una cadena:**
 ```bash
-# Autómata 1 - Verificador de vocales
-python src\dfa\fauna_main.py examples\vocales.json
+# Sin tracing (solo muestra si fue aceptada o rechazada)
+python src\dfa\fauna_main.py run examples\vocales.json mudanza
 
-# Autómata 2 - Semáforo inteligente
-python src\dfa\fauna_main.py examples\semaforo.json
-
-# Autómata 3 - Buscador de codones
-python src\dfa\fauna_main.py examples\bases.json
+# Con tracing (muestra el proceso paso a paso)
+python src\dfa\fauna_main.py run examples\vocales.json mudanza --trace
+python src\dfa\fauna_main.py run examples\vocales.json aire --trace
+python src\dfa\fauna_main.py run examples\semaforo.json rtn --trace
+python src\dfa\fauna_main.py run examples\bases.json ATGCC --trace
 ```
 
-Cada comando genera una imagen PNG en la misma carpeta del JSON:
-
+**Visualizar un DFA como PNG:**
+```bash
+python src\dfa\fauna_main.py view examples\vocales.json
+python src\dfa\fauna_main.py view examples\semaforo.json
+python src\dfa\fauna_main.py view examples\bases.json
 ```
-examples\vocales.png
-examples\semaforo.png
-examples\bases.png
+
+**Analizar un DFA:**
+```bash
+python src\dfa\fauna_main.py analyse examples\vocales.json
+python src\dfa\fauna_main.py analyse examples\semaforo.json
+python src\dfa\fauna_main.py analyse examples\bases.json
+```
+
+**Compilar un DFA extendido:**
+```bash
+python -c "import sys; sys.path.insert(0, 'src/dfa'); from model import DFA; from compiler import compile_dfa; dfa = DFA.from_json('examples/extended_dfa.json'); compiled = compile_dfa(dfa); print(compiled)"
 ```
 
 ### Ejecutar Tests
 
 ```bash
+# Todos los tests
+python -m pytest tests/
+
+# Por módulo
 python -m pytest tests/test_visualization.py
+python -m pytest tests/test_analysis.py
+python -m pytest tests/test_compilation.py
+python -m pytest tests/test_runner.py
 ```
 
 ---
@@ -153,7 +188,7 @@ html\index.html
 
 Ver `requirements.txt`. Las principales son:
 
-- `automata-lib` — Validación y manejo de DFAs
+- `automata-lib` — Validación y manejo de DFAs (visualización Sprint 1)
 - `pygraphviz` — Generación de imágenes PNG
 - `sphinx` — Generación de documentación
 - `pytest` — Pruebas unitarias

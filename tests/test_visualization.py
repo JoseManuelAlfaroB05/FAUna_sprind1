@@ -16,21 +16,21 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'dfa'))
 
 import pytest
-from automata.fa.dfa import DFA
+from model import DFA
 from fauna_main import generar_dot
 
 
 @pytest.fixture
 def dfa_simple():
     return DFA(
-        states={'q0', 'q1'},
-        input_symbols={'a', 'b'},
-        transitions={
+        pStates={'q0', 'q1'},
+        pAlphabet={'a', 'b'},
+        pTransitions={
             'q0': {'a': 'q1', 'b': 'q0'},
             'q1': {'a': 'q1', 'b': 'q0'}
         },
-        initial_state='q0',
-        final_states={'q1'}
+        pInitialState='q0',
+        pFinalStates={'q1'}
     )
 
 def test_dot_contiene_digraph(dfa_simple):
@@ -59,14 +59,14 @@ def test_dot_contiene_transiciones(dfa_simple):
 
 def test_dot_transiciones_agrupadas():
     dfa = DFA(
-        states={'q0', 'q1'},
-        input_symbols={'a', 'b'},
-        transitions={
+        pStates={'q0', 'q1'},
+        pAlphabet={'a', 'b'},
+        pTransitions={
             'q0': {'a': 'q1', 'b': 'q1'},
             'q1': {'a': 'q1', 'b': 'q1'}
         },
-        initial_state='q0',
-        final_states={'q1'}
+        pInitialState='q0',
+        pFinalStates={'q1'}
     )
     dot = generar_dot(dfa)
     assert 'label="a,b"' in dot or 'label="b,a"' in dot
